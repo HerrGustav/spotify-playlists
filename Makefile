@@ -12,7 +12,12 @@ fmt:
 	@gofmt -s -l . | grep -v '.pb.go:' | grep -v vendor | tee /dev/stderr
 
 test:
-	go test $(packages)
+	# go test $(packages) 
+	go test ./...
+
+test-verbose:
+	# go test $(packages) 
+	go test ./...
 
 clean:
 	rm -rf main main.zip
