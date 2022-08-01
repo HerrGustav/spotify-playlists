@@ -1,4 +1,4 @@
-NAME=my-funny-project
+NAME=spotify-playlists
 VERSION=v1.0
 HASH=$(shell git rev-parse --short HEAD)
 PACKAGES:=$(shell go list ./... | grep -v /vendor/)
