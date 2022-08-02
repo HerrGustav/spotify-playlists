@@ -99,16 +99,29 @@ func TestRetrieveAuthToken(t *testing.T) {
 				expectedError: errors.New("mock error"),
 			},
 		},
+		"got unexpected status code in response": {
+			shouldError: true,
+			httpClient: &mockHttpClient{
+				expectedResponse: &http.Response{
+					StatusCode: http.StatusUnauthorized,
+					Body:       io.NopCloser(bytes.NewBufferString(`{"access_token": "1234"}`)),
+				},
+			},
+		},
 		"failed to read auth body": {
 			shouldError: true,
 			httpClient: &mockHttpClient{
-				expectedResponse: &http.Response{Body: io.NopCloser(bytes.NewBufferString("1234"))},
+				expectedResponse: &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(bytes.NewBufferString("1234"))},
 			},
 		},
 		"got expected token": {
 			want: "1234",
 			httpClient: &mockHttpClient{
-				expectedResponse: &http.Response{Body: io.NopCloser(bytes.NewBufferString(`{"access_token": "1234"}`))},
+				expectedResponse: &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(bytes.NewBufferString(`{"access_token": "1234"}`))},
 			},
 		},
 	}

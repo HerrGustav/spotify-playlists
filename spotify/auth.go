@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	baseURL = "https://accounts.spotify.com/api/token"
+	baseTokenURL = "https://accounts.spotify.com/api/token"
+	successCode  = http.StatusOK
 )
 
 type HttpClient interface {
@@ -23,7 +24,7 @@ func createAuthHeader(id, secret string) string {
 }
 
 func createAuthRequest(id, secret string) (*http.Request, error) {
-	req, err := http.NewRequest(http.MethodPost, baseURL, bytes.NewBufferString("grant_type=client_credentials"))
+	req, err := http.NewRequest(http.MethodPost, baseTokenURL, bytes.NewBufferString("grant_type=client_credentials"))
 	if err != nil {
 		return &http.Request{}, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -67,6 +68,10 @@ func retrieveAuthToken(httpClient HttpClient, id, secret string) (string, error)
 		return "", fmt.Errorf("failed to execute auth request, %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != successCode {
+		return "", fmt.Errorf("got unexpected status code '%d', want: '%d'", resp.StatusCode, successCode)
+	}
 
 	body, err := readAuthBody(resp.Body)
 	if err != nil {
