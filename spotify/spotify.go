@@ -50,25 +50,25 @@ type Pagination struct {
 	Total    int64  `json:"total"`
 }
 
-type Playlist struct {
+type UserPlaylists struct {
 	Href  string        `json:"href"`
 	Items []interface{} `json:"items"`
 	Pagination
 }
 
-// GetPlaylists is targeting the endpoint described here in the spotify web api docs:
+// GetUserPlaylists is targeting the endpoint described here in the spotify web api docs:
 // https://developer.spotify.com/documentation/web-api/reference/#/operations/get-list-users-playlists
 // xxx :  this is not covering the entire functionality yet, e.g. the Pagination or the parsing of all
 // existing response fields. This is just needed for the POC for now.
 // ref.: https://github.com/HerrGustav/spotify-playlists/issues/1
-func (c *Client) GetPlaylists() (Playlist, error) {
+func (c *Client) GetUserPlaylists() (UserPlaylists, error) {
 	if !c.IsAuthorized() {
-		return Playlist{}, newError(notAuthorized, "client is not authorized", nil)
+		return UserPlaylists{}, newError(notAuthorized, "client is not authorized", nil)
 	}
 
 	req, err := http.NewRequest(http.MethodGet, baseURL+"/users/"+c.userName+"/playlists", nil)
 	if err != nil {
-		return Playlist{}, err
+		return UserPlaylists{}, err
 	}
 
 	req.Header.Add("Authorization", "Bearer "+c.token)
@@ -76,14 +76,18 @@ func (c *Client) GetPlaylists() (Playlist, error) {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return Playlist{}, err
+		return UserPlaylists{}, err
 	}
 
-	var playlists Playlist
+	var playlists UserPlaylists
 	err = json.NewDecoder(resp.Body).Decode(&playlists)
 	if err != nil {
-		return Playlist{}, err
+		return UserPlaylists{}, err
 	}
 
 	return playlists, err
+}
+
+func (c *Client) CreatePlaylist() error {
+	return nil
 }

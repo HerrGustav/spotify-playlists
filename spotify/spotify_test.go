@@ -66,7 +66,7 @@ func TestAuthorize(t *testing.T) {
 func TestGetPlaylists(t *testing.T) {
 	testcases := map[string]struct {
 		client      Client
-		want        Playlist
+		want        UserPlaylists
 		shouldError bool
 	}{
 		"not authorized": {
@@ -86,7 +86,7 @@ func TestGetPlaylists(t *testing.T) {
 			client: mockAuthorizedClient(Client{
 				httpClient: &mockHttpClient{
 					expectedResponse: &http.Response{
-						Body: io.NopCloser(bytes.NewBuffer(marshalInterface(t, Playlist{
+						Body: io.NopCloser(bytes.NewBuffer(marshalInterface(t, UserPlaylists{
 							Href: "test",
 						}))),
 					},
@@ -94,7 +94,7 @@ func TestGetPlaylists(t *testing.T) {
 				id:     "test",
 				secret: "test",
 			}),
-			want: Playlist{
+			want: UserPlaylists{
 				Href: "test",
 			},
 		},
@@ -102,7 +102,7 @@ func TestGetPlaylists(t *testing.T) {
 
 	for testName, tc := range testcases {
 		t.Run(testName, func(t *testing.T) {
-			got, err := tc.client.GetPlaylists()
+			got, err := tc.client.GetUserPlaylists()
 			if tc.shouldError && err == nil {
 				t.Error("spotify.Client.TestGetPlaylists() got no error but was expected to fail")
 			} else if err != nil && !tc.shouldError {
