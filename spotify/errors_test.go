@@ -37,3 +37,60 @@ func TestErrorMethod(t *testing.T) {
 		})
 	}
 }
+
+func TestIs(t *testing.T) {
+	mockSpotifyErr := errSpotify{
+		code: notAuthorized,
+	}
+
+	testcases := map[string]struct {
+		err   errSpotify
+		input error
+		want  bool
+	}{
+		"returns false if a nil error is parsed in": {
+			err:  mockSpotifyErr,
+			want: false,
+		},
+		"returns false if another error type is parsed in": {
+			err:   mockSpotifyErr,
+			input: errors.New("mock error"),
+			want:  false,
+		},
+		"returns false if a spotify error with different error code is parsed in": {
+			err:   mockSpotifyErr,
+			input: errSpotify{code: requestFailed},
+			want:  false,
+		},
+		"returns true if a spotify error with the same error code is parsed in": {
+			err:   mockSpotifyErr,
+			input: errSpotify{code: notAuthorized},
+			want:  true,
+		},
+	}
+
+	for testName, tc := range testcases {
+		t.Run(testName, func(t *testing.T) {
+			got := tc.err.Is(tc.input)
+			if got != tc.want {
+				t.Errorf("errSpotify.Is(): unexpected result, \n - got: '%v', \n - want: '%v'", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestUnwrap(t *testing.T) {
+	// Check that unwrap returns something
+	err := errSpotify{
+		code: notAuthorized,
+		msg:  "test",
+		err:  errMock,
+	}
+
+	want := errMock
+
+	got := err.Unwrap()
+	if got != want {
+		t.Errorf("errSpotify.Is(): unexpected result, \n - got: '%v', \n - want: '%v'", got, want)
+	}
+}

@@ -6,11 +6,13 @@ type errCode int64
 
 const (
 	notAuthorized errCode = iota
+	requestFailed
 )
 
 func (e errCode) String() string {
 	return [...]string{
 		"notAuthorized",
+		"requestFailed",
 	}[e]
 }
 
@@ -30,6 +32,18 @@ func (e errSpotify) Error() string {
 	}
 
 	return fmt.Sprintf("%s, %s", m, e.err.Error())
+}
+
+func (e errSpotify) Is(input error) bool {
+	if parsed, ok := input.(errSpotify); ok {
+		return e.code == parsed.code
+	}
+
+	return false
+}
+
+func (e errSpotify) Unwrap() error {
+	return e.err
 }
 
 func newError(code errCode, msg string, err error) errSpotify {
