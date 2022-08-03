@@ -53,6 +53,11 @@ func readAuthBody(body io.ReadCloser) (authBody, error) {
 	return a, nil
 }
 
+// retrieveAuthToken is mostly a port of the client credentials example in node.js to go.
+// It can be found here:
+// https://github.com/spotify/web-api-auth-examples/blob/master/client_credentials/app.js
+// it's relying on the authorization code flow as described here in the docs:
+// https://developer.spotify.com/documentation/general/guides/authorization/code-flow/
 func retrieveAuthToken(httpClient HttpClient, id, secret string) (string, error) {
 	if httpClient == nil {
 		return "", fmt.Errorf("http client can not be nil")

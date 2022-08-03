@@ -58,6 +58,9 @@ type Playlist struct {
 
 // GetPlaylists is targeting the endpoint described here in the spotify web api docs:
 // https://developer.spotify.com/documentation/web-api/reference/#/operations/get-list-users-playlists
+// xxx :  this is not covering the entire functionality yet, e.g. the Pagination or the parsing of all
+// existing response fields. This is just needed for the POC for now.
+// ref.: https://github.com/HerrGustav/spotify-playlists/issues/1
 func (c *Client) GetPlaylists() (Playlist, error) {
 	if !c.IsAuthorized() {
 		return Playlist{}, newError(notAuthorized, "client is not authorized", nil)
