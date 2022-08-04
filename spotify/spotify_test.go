@@ -85,11 +85,9 @@ func TestGetPlaylists(t *testing.T) {
 		"successfully retrieved playlists": {
 			client: mockAuthorizedClient(Client{
 				httpClient: &mockHttpClient{
-					expectedResponse: &http.Response{
-						Body: io.NopCloser(bytes.NewBuffer(marshalInterface(t, UserPlaylists{
-							Href: "test",
-						}))),
-					},
+					expectedResponse: createMockedHttpResponse(t, http.StatusOK, UserPlaylists{
+						Href: "test",
+					}),
 				},
 				id:     "test",
 				secret: "test",
@@ -155,7 +153,7 @@ func TestCreatePlaylist(t *testing.T) {
 		"Successfully created playlist -- return expected result": {
 			client: mockAuthorizedClient(Client{
 				httpClient: &mockHttpClient{
-					expectedResponse: createMockedHttpResponse(t, Playlist{
+					expectedResponse: createMockedHttpResponse(t, http.StatusCreated, Playlist{
 						ID: "1234",
 					}),
 				},
@@ -205,9 +203,10 @@ func marshalInterface(t *testing.T, v interface{}) []byte {
 	return out
 }
 
-func createMockedHttpResponse(t *testing.T, v interface{}) *http.Response {
+func createMockedHttpResponse(t *testing.T, status int, v interface{}) *http.Response {
 	return &http.Response{
-		Body: io.NopCloser(bytes.NewBuffer(marshalInterface(t, v))),
+		StatusCode: status,
+		Body:       io.NopCloser(bytes.NewBuffer(marshalInterface(t, v))),
 	}
 }
 

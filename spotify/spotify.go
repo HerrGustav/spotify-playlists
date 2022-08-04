@@ -1,7 +1,6 @@
 package spotify
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -17,30 +16,6 @@ type Client struct {
 	secret     string
 	userName   string
 	token      string
-}
-
-func NewClient(id, secret, user string) Client {
-	return Client{
-		httpClient: http.DefaultClient,
-		id:         id,
-		secret:     secret,
-		userName:   user,
-	}
-}
-
-func (c *Client) Authorize() error {
-	t, err := retrieveAuthToken(c.httpClient, c.id, c.secret)
-	if err != nil {
-		return fmt.Errorf("failed to authorize spotify client, %w", err)
-	}
-
-	c.token = t
-
-	return nil
-}
-
-func (c *Client) IsAuthorized() bool {
-	return c.token != ""
 }
 
 // Pagination is the representation of the pagination values that are
@@ -78,16 +53,28 @@ type UserPlaylists struct {
 	Pagination
 }
 
-func (c *Client) createAuthorizedRequest(method, url string, body []byte) (*http.Request, error) {
-	req, err := http.NewRequest(method, url, bytes.NewReader(body))
+func NewClient(id, secret, user string) Client {
+	return Client{
+		httpClient: http.DefaultClient,
+		id:         id,
+		secret:     secret,
+		userName:   user,
+	}
+}
+
+func (c *Client) Authorize() error {
+	t, err := retrieveAuthToken(c.httpClient, c.id, c.secret)
 	if err != nil {
-		return req, err
+		return fmt.Errorf("failed to authorize spotify client, %w", err)
 	}
 
-	req.Header.Add("Authorization", "Bearer "+c.token)
-	req.Header.Add("Accept", "application/json")
+	c.token = t
 
-	return req, nil
+	return nil
+}
+
+func (c *Client) IsAuthorized() bool {
+	return c.token != ""
 }
 
 // GetUserPlaylists is targeting the endpoint described here in the spotify web api docs:
@@ -105,10 +92,11 @@ func (c *Client) GetUserPlaylists() (UserPlaylists, error) {
 		return UserPlaylists{}, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.doRequest(req, http.StatusOK)
 	if err != nil {
-		return UserPlaylists{}, err
+		return UserPlaylists{}, newError(requestFailed, "failed to request api", err)
 	}
+	defer resp.Body.Close()
 
 	var playlists UserPlaylists
 	err = json.NewDecoder(resp.Body).Decode(&playlists)
@@ -148,10 +136,11 @@ func (c *Client) CreatePlaylist(payload CreatePlaylistPayload) (Playlist, error)
 		return Playlist{}, newError(internalError, "failed to create authorized request", err)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.doRequest(req, http.StatusCreated)
 	if err != nil {
 		return Playlist{}, newError(requestFailed, "failed to request api", err)
 	}
+	defer resp.Body.Close()
 
 	var p Playlist
 	err = json.NewDecoder(resp.Body).Decode(&p)
