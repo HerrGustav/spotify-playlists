@@ -7,12 +7,16 @@ type errCode int64
 const (
 	notAuthorized errCode = iota
 	requestFailed
+	invalidInputs
+	internalError
 )
 
 func (e errCode) String() string {
 	return [...]string{
 		"notAuthorized",
 		"requestFailed",
+		"invalidInputs",
+		"internalError",
 	}[e]
 }
 
@@ -23,7 +27,7 @@ type errSpotify struct {
 }
 
 func (e errSpotify) Error() string {
-	m := fmt.Sprintf("spotify client error code '%d'(%s) - '%s'", e.code, e.code.String(), e.msg)
+	m := fmt.Sprintf("spotify client error, code: '%d'(%s) - '%s'", e.code, e.code.String(), e.msg)
 
 	// if the underlying error is not existing return here,
 	// because an e.err.Error() which is nil would result in a panic.

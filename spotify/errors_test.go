@@ -16,7 +16,7 @@ func TestErrorMethod(t *testing.T) {
 				msg:  "mock",
 				err:  nil,
 			},
-			want: "spotify client error code '0'(notAuthorized) - 'mock'",
+			want: "spotify client error, code: '0'(notAuthorized) - 'mock'",
 		},
 		" returns underlying error in output if existing": {
 			err: errSpotify{
@@ -24,7 +24,7 @@ func TestErrorMethod(t *testing.T) {
 				msg:  "mock",
 				err:  errors.New("some error"),
 			},
-			want: "spotify client error code '0'(notAuthorized) - 'mock', some error",
+			want: "spotify client error, code: '0'(notAuthorized) - 'mock', some error",
 		},
 	}
 
@@ -71,7 +71,7 @@ func TestIs(t *testing.T) {
 
 	for testName, tc := range testcases {
 		t.Run(testName, func(t *testing.T) {
-			got := tc.err.Is(tc.input)
+			got := errors.Is(tc.err, tc.input)
 			if got != tc.want {
 				t.Errorf("errSpotify.Is(): unexpected result, \n - got: '%v', \n - want: '%v'", got, tc.want)
 			}
