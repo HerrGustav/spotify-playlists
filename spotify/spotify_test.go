@@ -116,6 +116,85 @@ func TestGetPlaylists(t *testing.T) {
 	}
 }
 
+func TestCreatePlaylist(t *testing.T) {
+	mockPayload := CreatePlaylistPayload{
+		Name: "mock name",
+	}
+	testcases := map[string]struct {
+		client         Client
+		payload        CreatePlaylistPayload
+		expectedError  error
+		expectedOutput Playlist
+	}{
+		"Given inputs are not valid -- should fail": {
+			client: Client{},
+			expectedError: errSpotify{
+				code: invalidInputs,
+			},
+		},
+		"User not authorized -- should fail": {
+			client:  Client{},
+			payload: mockPayload,
+			expectedError: errSpotify{
+				code: notAuthorized,
+			},
+		},
+		"Failed to create playlist -- return error": {
+			client: mockAuthorizedClient(Client{
+				httpClient: &mockHttpClient{
+					expectedError: errMock,
+				},
+				id:     "test",
+				secret: "test",
+			}),
+			payload: mockPayload,
+			expectedError: errSpotify{
+				code: requestFailed,
+			},
+		},
+		"Successfully created playlist -- return expected result": {
+			client: mockAuthorizedClient(Client{
+				httpClient: &mockHttpClient{
+					expectedResponse: createMockedHttpResponse(t, Playlist{
+						ID: "1234",
+					}),
+				},
+				id:     "test",
+				secret: "test",
+			}),
+			payload: mockPayload,
+			expectedOutput: Playlist{
+				ID: "1234",
+			},
+		},
+	}
+
+	for testName, tc := range testcases {
+		t.Run(testName, func(t *testing.T) {
+			out, err := tc.client.CreatePlaylist(tc.payload)
+			checkSpotifyError(t, tc.expectedError, err)
+
+			if diff := cmp.Diff(tc.expectedOutput, out); diff != "" {
+				t.Errorf("spotify.Client.CreatePlaylist() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func checkSpotifyError(t *testing.T, want, got error) {
+	// want == nil && got == nil has no effect.
+	// so we skip this here
+	if want == nil && got != nil {
+		t.Errorf("test '%s': unexpected error - '%s' ", t.Name(), got.Error())
+		return
+	}
+
+	if want != nil && !errors.Is(got, want) {
+		t.Errorf("test '%s': unexpected error, \n - got: '%v' , \n - want: '%v'", t.Name(), got, want)
+		return
+	}
+}
+
 func marshalInterface(t *testing.T, v interface{}) []byte {
 	out, err := json.Marshal(v)
 	if err != nil {
@@ -124,6 +203,12 @@ func marshalInterface(t *testing.T, v interface{}) []byte {
 	}
 
 	return out
+}
+
+func createMockedHttpResponse(t *testing.T, v interface{}) *http.Response {
+	return &http.Response{
+		Body: io.NopCloser(bytes.NewBuffer(marshalInterface(t, v))),
+	}
 }
 
 // mockAuthorizedClient is basically only adding a fake token

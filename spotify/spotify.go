@@ -1,6 +1,7 @@
 package spotify
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -42,6 +43,9 @@ func (c *Client) IsAuthorized() bool {
 	return c.token != ""
 }
 
+// Pagination is the representation of the pagination values that are
+// typically included in every response of the spotify web api. This here
+// is for keeping the code a bit more dry.
 type Pagination struct {
 	Limit    int64  `json:"limit"`
 	Next     string `json:"next"`
@@ -50,10 +54,40 @@ type Pagination struct {
 	Total    int64  `json:"total"`
 }
 
+// Playlist is a minimal representation of the response object described here:
+// https://developer.spotify.com/documentation/web-api/reference/#/operations/create-playlist
+// It does not aim to be the complete representation for now.
+type Playlist struct {
+	Collaborative bool   `json:"collaborative"`
+	Description   string `json:"description"`
+	Href          string `json:"href"`
+	ID            string `json:"id"`
+	Name          string `json:"name"`
+	Public        bool   `json:"public"`
+	SnapshotID    bool   `json:"snapshot_id"`
+	Type          string `json:"type"`
+	URI           string `json:"uri"`
+	Pagination
+}
+
+// UserPlaylists is the minimal representation of this response
+// // https://developer.spotify.com/documentation/web-api/reference/#/operations/get-list-users-playlists
 type UserPlaylists struct {
 	Href  string        `json:"href"`
 	Items []interface{} `json:"items"`
 	Pagination
+}
+
+func (c *Client) createAuthorizedRequest(method, url string, body []byte) (*http.Request, error) {
+	req, err := http.NewRequest(method, url, bytes.NewReader(body))
+	if err != nil {
+		return req, err
+	}
+
+	req.Header.Add("Authorization", "Bearer "+c.token)
+	req.Header.Add("Accept", "application/json")
+
+	return req, nil
 }
 
 // GetUserPlaylists is targeting the endpoint described here in the spotify web api docs:
@@ -66,13 +100,10 @@ func (c *Client) GetUserPlaylists() (UserPlaylists, error) {
 		return UserPlaylists{}, newError(notAuthorized, "client is not authorized", nil)
 	}
 
-	req, err := http.NewRequest(http.MethodGet, baseURL+"/users/"+c.userName+"/playlists", nil)
+	req, err := c.createAuthorizedRequest(http.MethodGet, baseURL+"/users/"+c.userName+"/playlists", nil)
 	if err != nil {
 		return UserPlaylists{}, err
 	}
-
-	req.Header.Add("Authorization", "Bearer "+c.token)
-	req.Header.Add("Accept", "application/json")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -88,6 +119,45 @@ func (c *Client) GetUserPlaylists() (UserPlaylists, error) {
 	return playlists, err
 }
 
-func (c *Client) CreatePlaylist() error {
-	return nil
+type CreatePlaylistPayload struct {
+	Name          string `json:"name"`
+	Public        bool   `json:"public,omitempty"`
+	Collaborative bool   `json:"collaborative,omitempty"`
+	Description   string `json:"description,omitempty"`
+}
+
+// CreatePlaylist creates a playlist for a given user as described here:
+// https://developer.spotify.com/documentation/web-api/reference/#/operations/create-playlist
+// The name of the playlist is the only mandatory input.
+func (c *Client) CreatePlaylist(payload CreatePlaylistPayload) (Playlist, error) {
+	if payload.Name == "" {
+		return Playlist{}, newError(invalidInputs, "playlist name is a required payload field", nil)
+	}
+
+	if !c.IsAuthorized() {
+		return Playlist{}, newError(notAuthorized, "client is not authorized", nil)
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return Playlist{}, newError(internalError, "failed to marshal request payload", err)
+	}
+
+	req, err := c.createAuthorizedRequest(http.MethodPost, baseURL+"/users/"+c.userName+"/playlists", body)
+	if err != nil {
+		return Playlist{}, newError(internalError, "failed to create authorized request", err)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return Playlist{}, newError(requestFailed, "failed to request api", err)
+	}
+
+	var p Playlist
+	err = json.NewDecoder(resp.Body).Decode(&p)
+	if err != nil {
+		return Playlist{}, newError(internalError, "failed to decode api response", err)
+	}
+
+	return p, nil
 }
