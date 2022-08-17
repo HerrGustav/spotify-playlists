@@ -39,7 +39,7 @@ type Playlist struct {
 	ID            string `json:"id"`
 	Name          string `json:"name"`
 	Public        bool   `json:"public"`
-	SnapshotID    bool   `json:"snapshot_id"`
+	SnapshotID    string `json:"snapshot_id"`
 	Type          string `json:"type"`
 	URI           string `json:"uri"`
 	Pagination
@@ -59,6 +59,14 @@ func NewClient(id, secret, user string) Client {
 		id:         id,
 		secret:     secret,
 		userName:   user,
+	}
+}
+
+func NewAuthorizedClient(user, token string) Client {
+	return Client{
+		httpClient: http.DefaultClient,
+		userName:   user,
+		token:      token,
 	}
 }
 
@@ -109,8 +117,8 @@ func (c *Client) GetUserPlaylists() (UserPlaylists, error) {
 
 type CreatePlaylistPayload struct {
 	Name          string `json:"name"`
-	Public        bool   `json:"public,omitempty"`
-	Collaborative bool   `json:"collaborative,omitempty"`
+	Public        bool   `json:"public"`
+	Collaborative bool   `json:"collaborative"`
 	Description   string `json:"description,omitempty"`
 }
 
