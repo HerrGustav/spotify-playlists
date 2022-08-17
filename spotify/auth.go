@@ -9,6 +9,14 @@ import (
 	"net/http"
 )
 
+/**
+ * This is curretnly only implementing the "Client Credentials Flow"
+ * ref.: https://developer.spotify.com/documentation/general/guides/authorization/client-credentials/
+ * The "Authorization Code Flow" will be needed to access actual user related resources.
+ * ref.: https://developer.spotify.com/documentation/general/guides/authorization/code-flow/
+ * @TODO: add the
+ */
+
 const (
 	baseTokenURL = "https://accounts.spotify.com/api/token"
 	successCode  = http.StatusOK
