@@ -10,11 +10,11 @@ import (
 )
 
 /**
- * This is curretnly only implementing the "Client Credentials Flow"
+ * This is currently only implementing the "Client Credentials Flow"
  * ref.: https://developer.spotify.com/documentation/general/guides/authorization/client-credentials/
  * The "Authorization Code Flow" will be needed to access actual user related resources.
  * ref.: https://developer.spotify.com/documentation/general/guides/authorization/code-flow/
- * @TODO: add the
+ * @TODO: add the flow to access user resources via token.
  */
 
 const (
